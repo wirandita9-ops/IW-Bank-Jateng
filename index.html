@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Keuangan Bendahara Ikatan Wanita Bank Jateng</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bjblue: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            dark: '#032541'
+                        },
+                        bjgold: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- HEADER / NAVIGATION BAR -->
+    <header class="bg-gradient-to-r from-bjblue-dark via-bjblue-900 to-bjblue-800 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Branding -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-bjgold-500 to-amber-300 flex items-center justify-center text-bjblue-dark font-extrabold text-xl shadow-md">
+                        IW
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight tracking-wide">IKATAN WANITA BANK JATENG</h1>
+                        <p class="text-xs text-slate-300 font-light">Sistem Pencatatan Keuangan Bendahara</p>
+                    </div>
+                </div>
+
+                <!-- Balance Badge Quick View -->
+                <div class="hidden md:flex items-center gap-4 bg-white/10 px-4 py-1.5 rounded-full border border-white/15 text-xs backdrop-blur-md">
+                    <div>
+                        <span class="text-slate-300 block text-[10px] uppercase tracking-wider">Saldo Operasional</span>
+                        <span id="quick-operasional-balance" class="font-bold text-emerald-400 text-sm">Rp 0</span>
+                    </div>
+                    <div class="h-6 w-px bg-white/20"></div>
+                    <div>
+                        <span class="text-slate-300 block text-[10px] uppercase tracking-wider">Dana Taktis</span>
+                        <span id="quick-taktis-balance" class="font-bold text-amber-300 text-sm">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-bjblue-dark/60 border-t border-white/10 px-4 sm:px-6 lg:px-8 overflow-x-auto custom-scrollbar">
+            <div class="max-w-7xl mx-auto flex space-x-1 sm:space-x-4 text-xs font-medium py-1 whitespace-nowrap" id="nav-tabs">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-btn active flex items-center gap-2 px-3.5 py-2 rounded-lg text-white bg-bjblue-500 transition-all">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </button>
+                <button onclick="switchTab('operasional')" id="tab-operasional" class="nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-wallet"></i> Kas Operasional
+                </button>
+                <button onclick="switchTab('uudp')" id="tab-uudp" class="nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> UUDP Seksi
+                </button>
+                <button onclick="switchTab('rab')" id="tab-rab" class="nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-calculator"></i> RAB & Anggaran
+                </button>
+                <button onclick="switchTab('taktis')" id="tab-taktis" class="nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-vault"></i> Dana Taktis
+                </button>
+                <button onclick="switchTab('kategori')" id="tab-kategori" class="nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-tags"></i> Kategori
+                </button>
+                <button onclick="switchTab('laporan')" id="tab-laporan" class="nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Laporan & Export
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- 1. DASHBOARD VIEW -->
+        <section id="view-dashboard" class="tab-content space-y-6">
+            <!-- Summary Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Saldo Utama Operasional -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 relative overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Saldo Operasional</p>
+                            <h3 id="dash-operasional-balance" class="text-2xl font-bold text-slate-800 mt-1">Rp 0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-slate-500 gap-2">
+                        <span class="text-emerald-600 font-medium"><i class="fa-solid fa-circle-info"></i> Realkas utama</span>
+                    </div>
+                </div>
+
+                <!-- Total Penerimaan -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 relative overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Penerimaan</p>
+                            <h3 id="dash-total-penerimaan" class="text-2xl font-bold text-emerald-600 mt-1">Rp 0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-arrow-down-left"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-slate-500">
+                        <span>Bantuan, UUDP, Iuran, dll</span>
+                    </div>
+                </div>
+
+                <!-- Total Pengeluaran -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 relative overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Pengeluaran</p>
+                            <h3 id="dash-total-pengeluaran" class="text-2xl font-bold text-rose-600 mt-1">Rp 0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-arrow-up-right"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-slate-500">
+                        <span>Kegiatan seksi & operasional</span>
+                    </div>
+                </div>
+
+                <!-- Saldo Dana Taktis (Terpisah) -->
+                <div class="bg-gradient-to-br from-slate-900 to-bjblue-dark p-5 rounded-2xl shadow-sm text-white relative overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Dana Taktis (Khusus)</p>
+                            <h3 id="dash-taktis-balance" class="text-2xl font-bold text-amber-300 mt-1">Rp 0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-lg border border-amber-400/30">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-slate-300">
+                        <span><i class="fa-solid fa-lock text-amber-400 mr-1"></i> Terpisah dari Operasional</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Chart Penyerapan RAB Seksi -->
+                <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-bjblue-500"></i> Penyerapan Anggaran (RAB) per Seksi
+                        </h3>
+                        <span class="text-xs text-slate-400">Realisasi vs Plafon</span>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="chartRAB"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart Pengeluaran Per Seksi -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-bjgold-500"></i> Distribusi Seksi
+                        </h3>
+                    </div>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="chartSeksi"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ringkasan UUDP Seksi Aktif -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Status UUDP Seksi Bulan Ini
+                    </h3>
+                    <button onclick="switchTab('uudp')" class="text-xs font-semibold text-bjblue-500 hover:underline">Kelola UUDP &rarr;</button>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="dash-uudp-cards">
+                    <!-- Dynamic Cards Generated Here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. KAS OPERASIONAL VIEW -->
+        <section id="view-operasional" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Kas Operasional & Transaksi</h2>
+                    <p class="text-xs text-slate-500">Catat seluruh penerimaan umum dan pengeluaran operasional organisasi</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openModalModalKas('MASUK')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+                        <i class="fa-solid fa-plus-circle"></i> + Penerimaan
+                    </button>
+                    <button onclick="openModalModalKas('KELUAR')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+                        <i class="fa-solid fa-minus-circle"></i> + Pengeluaran
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Transaksi Operasional -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-wrap gap-3 justify-between items-center">
+                    <span class="font-bold text-sm text-slate-700">Daftar Transaksi Operasional</span>
+                    <input type="text" id="search-operasional" onkeyup="renderOperasionalTable()" placeholder="Cari keterangan / seksi..." class="text-xs border border-slate-300 rounded-lg px-3 py-1.5 w-60 focus:outline-none focus:border-bjblue-500">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">Jenis</th>
+                                <th class="p-3">Seksi</th>
+                                <th class="p-3">Kategori & RAB</th>
+                                <th class="p-3">Keterangan</th>
+                                <th class="p-3 text-right">Jumlah (Rp)</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-operasional-body" class="divide-y divide-slate-100">
+                            <!-- Rows loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. UUDP SEKSI VIEW -->
+        <section id="view-uudp" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">UUDP (Uang Untuk Dipertanggungjawabkan)</h2>
+                    <p class="text-xs text-slate-500">Sistem Pencatatan Uang Muka Kegiatan per Seksi & Pertanggungjawaban Akhir Bulan</p>
+                </div>
+                <button onclick="openModalUUDP()" class="bg-bjblue-500 hover:bg-bjblue-800 text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Serahkan UUDP Baru
+                </button>
+            </div>
+
+            <!-- List Aktif UUDP per Seksi -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="uudp-active-cards">
+                <!-- Cards Loaded Dynamically -->
+            </div>
+
+            <!-- Riwayat Pengeluaran UUDP / Laporan Detail -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-sm text-slate-700">Riwayat & Rincian Penggunaan UUDP Seksi</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">Seksi</th>
+                                <th class="p-3">Kategori Kegiatan</th>
+                                <th class="p-3">Rincian / Nota</th>
+                                <th class="p-3 text-right">Terpakai (Rp)</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-uudp-detail-body" class="divide-y divide-slate-100">
+                            <!-- Detail rows dynamically loaded -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. RAB & ANGGARAN VIEW -->
+        <section id="view-rab" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Rancangan Anggaran Biaya (RAB) per Seksi</h2>
+                    <p class="text-xs text-slate-500">Plafon anggaran tahunan/kegiatan dan monitoring sisa kuota anggaran</p>
+                </div>
+                <button onclick="openModalRAB()" class="bg-bjblue-500 hover:bg-bjblue-800 text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+                    <i class="fa-solid fa-plus-circle"></i> + Tambah Plafon RAB
+                </button>
+            </div>
+
+            <!-- Grid Cards Progress Bar RAB per Seksi -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="rab-progress-cards">
+                <!-- Dynamically Generated Cards -->
+            </div>
+
+            <!-- Tabel Daftar RAB -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <span class="font-bold text-sm text-slate-700">Rincian Plafon & Realisasi RAB</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Seksi</th>
+                                <th class="p-3">Nama Kategori RAB</th>
+                                <th class="p-3 text-right">Plafon Anggaran (Rp)</th>
+                                <th class="p-3 text-right">Terpakai (Rp)</th>
+                                <th class="p-3 text-right">Sisa Anggaran (Rp)</th>
+                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-rab-body" class="divide-y divide-slate-100">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. DANA TAKTIS VIEW -->
+        <section id="view-taktis" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Pencatatan Dana Taktis</h2>
+                    <p class="text-xs text-slate-500">Uang khusus di luar laporan kas operasional utama (Tetap tercatat rapi dan transparan)</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openModalTaktis('MASUK')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-plus-circle"></i> + Penerimaan Taktis
+                    </button>
+                    <button onclick="openModalTaktis('KELUAR')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-minus-circle"></i> + Pengeluaran Taktis
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabel Dana Taktis -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <span class="font-bold text-sm text-slate-700">Buku Kas Dana Taktis</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">Jenis</th>
+                                <th class="p-3">Keterangan / Sumber</th>
+                                <th class="p-3 text-right">Jumlah (Rp)</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-taktis-body" class="divide-y divide-slate-100">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. KATEGORI DINAMIS VIEW -->
+        <section id="view-kategori" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Kelola Kategori Transaksi</h2>
+                    <p class="text-xs text-slate-500">Atur kategori pengeluaran dan penerimaan sesuai kebutuhan organisasi</p>
+                </div>
+                <button onclick="openModalKategori()" class="bg-bjblue-500 hover:bg-bjblue-800 text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center gap-2">
+                    <i class="fa-solid fa-tags"></i> + Kategori Baru
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Kategori Pengeluaran -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+                    <h3 class="font-bold text-sm text-slate-800 mb-3 border-b pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-up-right text-rose-500"></i> Kategori Pengeluaran
+                    </h3>
+                    <ul id="list-kategori-pengeluaran" class="space-y-2 text-xs">
+                        <!-- Loaded dynamically -->
+                    </ul>
+                </div>
+
+                <!-- Kategori Penerimaan -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+                    <h3 class="font-bold text-sm text-slate-800 mb-3 border-b pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-down-left text-emerald-500"></i> Kategori Penerimaan
+                    </h3>
+                    <ul id="list-kategori-penerimaan" class="space-y-2 text-xs">
+                        <!-- Loaded dynamically -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. LAPORAN & EXPORT VIEW -->
+        <section id="view-laporan" class="tab-content hidden space-y-6">
+            <!-- Filter Box -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <h2 class="font-bold text-base text-slate-800 flex items-center gap-2 border-b pb-2">
+                    <i class="fa-solid fa-filter text-bjblue-500"></i> Filter Laporan Keuangan
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Filter Seksi:</label>
+                        <select id="filter-seksi" class="w-full border border-slate-300 rounded-lg p-2 focus:border-bjblue-500">
+                            <option value="SEMUA">-- Semua Seksi --</option>
+                            <option value="Bendahara">Bendahara</option>
+                            <option value="Sekretaris">Sekretaris</option>
+                            <option value="Seksi Organisasi">Seksi Organisasi</option>
+                            <option value="Seksi Kesra">Seksi Kesra (Kesejahteraan)</option>
+                            <option value="Seksi Pendidikan">Seksi Pendidikan</option>
+                            <option value="Seksi Usaha">Seksi Usaha</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Periode Waktu:</label>
+                        <select id="filter-periode" onchange="toggleCustomDate()" class="w-full border border-slate-300 rounded-lg p-2 focus:border-bjblue-500">
+                            <option value="SEMUA">Semua Waktu</option>
+                            <option value="BULAN_INI">Bulan Ini</option>
+                            <option value="TRIWULAN_1">Triwulan 1 (Jan - Mar)</option>
+                            <option value="TRIWULAN_2">Triwulan 2 (Apr - Jun)</option>
+                            <option value="TRIWULAN_3">Triwulan 3 (Jul - Sep)</option>
+                            <option value="TRIWULAN_4">Triwulan 4 (Okt - Des)</option>
+                            <option value="SEMESTER_1">Semester 1 (Jan - Jun)</option>
+                            <option value="SEMESTER_2">Semester 2 (Jul - Des)</option>
+                            <option value="TAHUN_INI">Tahun Ini</option>
+                            <option value="CUSTOM">Rentang Tanggal Custom</option>
+                        </select>
+                    </div>
+                    <div id="custom-date-start" class="hidden">
+                        <label class="block font-semibold text-slate-600 mb-1">Dari Tanggal:</label>
+                        <input type="date" id="filter-date-start" class="w-full border border-slate-300 rounded-lg p-2">
+                    </div>
+                    <div id="custom-date-end" class="hidden">
+                        <label class="block font-semibold text-slate-600 mb-1">Sampai Tanggal:</label>
+                        <input type="date" id="filter-date-end" class="w-full border border-slate-300 rounded-lg p-2">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="applyReportFilter()" class="bg-bjblue-500 hover:bg-bjblue-800 text-white font-medium text-xs px-5 py-2.5 rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass"></i> Tampilkan Laporan
+                    </button>
+                    <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-5 py-2.5 rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-file-excel"></i> Export to Excel (.xlsx)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabel Hasil Laporan Filtered -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <span class="font-bold text-sm text-slate-700" id="report-title-label">Hasil Laporan Kas Operasional</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs" id="table-report-export">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">Jenis</th>
+                                <th class="p-3">Seksi</th>
+                                <th class="p-3">Kategori</th>
+                                <th class="p-3">Keterangan</th>
+                                <th class="p-3 text-right">Penerimaan (Rp)</th>
+                                <th class="p-3 text-right">Pengeluaran (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-laporan-body" class="divide-y divide-slate-100">
+                            <!-- Rows loaded dynamically -->
+                        </tbody>
+                        <!-- Ringkasan Total Laporan di Bawah -->
+                        <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-300 text-slate-800">
+                            <tr>
+                                <td colspan="5" class="p-3 text-right">TOTAL TERFILTER:</td>
+                                <td id="report-total-masuk" class="p-3 text-right text-emerald-600">Rp 0</td>
+                                <td id="report-total-keluar" class="p-3 text-right text-rose-600">Rp 0</td>
+                            </tr>
+                            <tr class="bg-slate-200">
+                                <td colspan="5" class="p-3 text-right uppercase">SISA SURPLUS / DEFISIT:</td>
+                                <td colspan="2" id="report-net-balance" class="p-3 text-center text-sm font-extrabold text-bjblue-900">Rp 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-4 text-center text-xs text-slate-400">
+        <p>&copy; Ikatan Wanita Bank Jateng - Aplikasi Keuangan Bendahara Mandiri</p>
+    </footer>
+
+    <!-- MODAL DIALOGS -->
+
+    <!-- Modal Transaksi Kas Operasional -->
+    <div id="modal-kas" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+            <h3 id="modal-kas-title" class="font-bold text-base text-slate-800 border-b pb-2">Input Transaksi Kas</h3>
+            <form id="form-kas" onsubmit="handleSaveKas(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="kas-id">
+                <input type="hidden" id="kas-type" value="MASUK">
+
+                <div>
+                    <label class="block font-semibold mb-1">Tanggal Transaksi</label>
+                    <input type="date" id="kas-date" required class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-1">Seksi Penanggungjawab</label>
+                    <select id="kas-seksi" required class="w-full border border-slate-300 rounded-lg p-2">
+                        <option value="Bendahara">Bendahara</option>
+                        <option value="Sekretaris">Sekretaris</option>
+                        <option value="Seksi Organisasi">Seksi Organisasi</option>
+                        <option value="Seksi Kesra">Seksi Kesra</option>
+                        <option value="Seksi Pendidikan">Seksi Pendidikan</option>
+                        <option value="Seksi Usaha">Seksi Usaha</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-1">Kategori Transaksi</label>
+                    <select id="kas-kategori" required class="w-full border border-slate-300 rounded-lg p-2">
+                        <!-- Loaded dynamically -->
+                    </select>
+                </div>
+
+                <div id="kas-rab-container">
+                    <label class="block font-semibold mb-1">Hubungkan ke Plafon RAB (Opsional)</label>
+                    <select id="kas-rab-id" class="w-full border border-slate-300 rounded-lg p-2">
+                        <option value="">-- Tanpa RAB --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-1">Keterangan / Detail Kegiatan</label>
+                    <input type="text" id="kas-ket" required placeholder="misal: SPPD Ketua, Snack Arisan..." class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-1">Jumlah Nominal (Rp)</label>
+                    <input type="number" id="kas-amount" required min="1" placeholder="0" class="w-full border border-slate-300 rounded-lg p-2 font-bold text-sm">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('modal-kas')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-bjblue-500 hover:bg-bjblue-800 text-white font-medium rounded-xl">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Penyerahan UUDP Baru -->
+    <div id="modal-uudp" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 class="font-bold text-base text-slate-800 border-b pb-2">Penyerahan UUDP Baru (Uang Muka)</h3>
+            <form onsubmit="handleSaveUUDP(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">Tanggal Penyerahan</label>
+                    <input type="date" id="uudp-date" required class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Seksi Penerima UUDP</label>
+                    <select id="uudp-seksi" required class="w-full border border-slate-300 rounded-lg p-2">
+                        <option value="Sekretaris">Sekretaris</option>
+                        <option value="Seksi Organisasi">Seksi Organisasi</option>
+                        <option value="Seksi Kesra">Seksi Kesra</option>
+                        <option value="Seksi Pendidikan">Seksi Pendidikan</option>
+                        <option value="Seksi Usaha">Seksi Usaha</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Nominal Uang Muka (Rp)</label>
+                    <input type="number" id="uudp-amount" min="1" required placeholder="misal: 1000000" class="w-full border border-slate-300 rounded-lg p-2 font-bold">
+                </div>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('modal-uudp')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-bjblue-500 text-white rounded-xl">Serahkan UUDP</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Laporan Penggunaan UUDP (Detail Nota) -->
+    <div id="modal-uudp-detail" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 class="font-bold text-base text-slate-800 border-b pb-2">Lapor Penggunaan / Rincian UUDP</h3>
+            <form onsubmit="handleSaveUUDPDetail(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="uudp-parent-id">
+                <div>
+                    <label class="block font-semibold mb-1">Tanggal Transaksi Nota</label>
+                    <input type="date" id="uudp-detail-date" required class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Kategori Pengeluaran</label>
+                    <select id="uudp-detail-kategori" required class="w-full border border-slate-300 rounded-lg p-2"></select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Rincian Kegiatan / Nota</label>
+                    <input type="text" id="uudp-detail-ket" placeholder="misal: Pembelian snack arisan..." required class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Nominal Terpakai (Rp)</label>
+                    <input type="number" id="uudp-detail-amount" min="1" required placeholder="0" class="w-full border border-slate-300 rounded-lg p-2 font-bold">
+                </div>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('modal-uudp-detail')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl">Simpan Rincian</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal RAB / Anggaran Baru -->
+    <div id="modal-rab" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 id="modal-rab-title" class="font-bold text-base text-slate-800 border-b pb-2">Set Plafon Anggaran (RAB)</h3>
+            <form onsubmit="handleSaveRAB(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="rab-id">
+                <div>
+                    <label class="block font-semibold mb-1">Seksi Penanggungjawab</label>
+                    <select id="rab-seksi" required class="w-full border border-slate-300 rounded-lg p-2">
+                        <option value="Bendahara">Bendahara</option>
+                        <option value="Sekretaris">Sekretaris</option>
+                        <option value="Seksi Organisasi">Seksi Organisasi</option>
+                        <option value="Seksi Kesra">Seksi Kesra</option>
+                        <option value="Seksi Pendidikan">Seksi Pendidikan</option>
+                        <option value="Seksi Usaha">Seksi Usaha</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Nama Kategori Anggaran RAB</label>
+                    <input type="text" id="rab-nama" required placeholder="misal: Anggaran SPPD, Anggaran Arisan..." class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Plafon Maksimal Anggaran (Rp)</label>
+                    <input type="number" id="rab-plafon" min="1" required placeholder="0" class="w-full border border-slate-300 rounded-lg p-2 font-bold">
+                </div>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('modal-rab')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-bjblue-500 text-white rounded-xl">Simpan RAB</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Dana Taktis -->
+    <div id="modal-taktis" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 id="modal-taktis-title" class="font-bold text-base text-slate-800 border-b pb-2">Transaksi Dana Taktis</h3>
+            <form onsubmit="handleSaveTaktis(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="taktis-id">
+                <input type="hidden" id="taktis-type" value="MASUK">
+                <div>
+                    <label class="block font-semibold mb-1">Tanggal</label>
+                    <input type="date" id="taktis-date" required class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Keterangan / Sumber / Peruntukan</label>
+                    <input type="text" id="taktis-ket" required placeholder="misal: Sumbangan khusus, dana darurat..." class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Jumlah Nominal (Rp)</label>
+                    <input type="number" id="taktis-amount" min="1" required placeholder="0" class="w-full border border-slate-300 rounded-lg p-2 font-bold">
+                </div>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('modal-taktis')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-bjblue-500 text-white rounded-xl">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Kategori -->
+    <div id="modal-kategori" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 class="font-bold text-base text-slate-800 border-b pb-2">Tambah Kategori Transaksi</h3>
+            <form onsubmit="handleSaveKategori(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">Jenis Kategori</label>
+                    <select id="kat-type" class="w-full border border-slate-300 rounded-lg p-2">
+                        <option value="KELUAR">Pengeluaran</option>
+                        <option value="MASUK">Penerimaan</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Nama Kategori</label>
+                    <input type="text" id="kat-nama" required placeholder="misal: SPPD GOW, IWABA, Bantuan Pembina..." class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('modal-kategori')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-bjblue-500 text-white rounded-xl">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- APPLICATION LOGIC JS -->
+    <script>
+        // DATA STATE (PERSISTED IN LOCALSTORAGE)
+        let state = {
+            kas: [],       // { id, date, type: 'MASUK'|'KELUAR', seksi, kategori, rabId, ket, amount }
+            uudp: [],      // { id, date, seksi, initialAmount, isClosed: false }
+            uudpDetail: [],// { id, parentId, date, kategori, ket, amount }
+            rab: [],       // { id, seksi, nama, plafon }
+            taktis: [],    // { id, date, type: 'MASUK'|'KELUAR', ket, amount }
+            kategori: {
+                MASUK: ['Bantuan Bapak Pembina', 'Pengembalian UUDP Seksi', 'Iuran Anggota', 'Sponsor / Donasi', 'Lain-Lain'],
+                KELUAR: ['SPPD Ketua / GOW', 'Kegiatan IWABA', 'Snack & Konsumsi Arisan', 'Bantuan Sosial / Kesra', 'Pelatihan / Pendidikan', 'Perlengkapan Seksi Usaha', 'Operasional Sekretariat', 'Lain-Lain']
+            }
+        };
+
+        // CHART INSTANCES
+        let chartRABInstance = null;
+        let chartSeksiInstance = null;
+
+        // INITIALIZATION
+        window.onload = function() {
+            loadFromLocalStorage();
+            setTodayDates();
+            renderAllViews();
+        };
+
+        function setTodayDates() {
+            const today = new Date().toISOString().split('T')[0];
+            ['kas-date', 'uudp-date', 'uudp-detail-date', 'taktis-date'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.value = today;
+            });
+        }
+
+        // LOCAL STORAGE MANAGEMENT
+        function saveToLocalStorage() {
+            localStorage.setItem('IW_BANK_JATENG_DB', JSON.stringify(state));
+            renderAllViews();
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('IW_BANK_JATENG_DB');
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Failed to load local storage", e);
+                }
+            }
+        }
+
+        // HELPER UTILITIES
+        function formatRp(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount || 0);
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-600' : 'bg-rose-600';
+            toast.className = `${bg} text-white text-xs px-4 py-3 rounded-xl shadow-lg transition-all transform duration-300 flex items-center gap-2`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-bjblue-500', 'text-white');
+                btn.classList.add('text-slate-300');
+            });
+
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('bg-bjblue-500', 'text-white');
+            activeBtn.classList.remove('text-slate-300');
+
+            if(tabId === 'dashboard') renderCharts();
+            if(tabId === 'laporan') applyReportFilter();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // RENDER ALL DATA VIEWS
+        function renderAllViews() {
+            calculateBalances();
+            renderOperasionalTable();
+            renderUUDPView();
+            renderRABView();
+            renderTaktisTable();
+            renderKategoriLists();
+            renderKategoriOptions();
+            renderCharts();
+        }
+
+        // CALCULATION LOGIC
+        function calculateBalances() {
+            // Operasional
+            let totalMasuk = state.kas.filter(k => k.type === 'MASUK').reduce((acc, k) => acc + Number(k.amount), 0);
+            let totalKeluar = state.kas.filter(k => k.type === 'KELUAR').reduce((acc, k) => acc + Number(k.amount), 0);
+            let saldoOperasional = totalMasuk - totalKeluar;
+
+            // Dana Taktis
+            let taktisMasuk = state.taktis.filter(t => t.type === 'MASUK').reduce((acc, t) => acc + Number(t.amount), 0);
+            let taktisKeluar = state.taktis.filter(t => t.type === 'KELUAR').reduce((acc, t) => acc + Number(t.amount), 0);
+            let saldoTaktis = taktisMasuk - taktisKeluar;
+
+            // Update UI Quick Badges & Dashboard
+            document.getElementById('quick-operasional-balance').innerText = formatRp(saldoOperasional);
+            document.getElementById('quick-taktis-balance').innerText = formatRp(saldoTaktis);
+
+            document.getElementById('dash-operasional-balance').innerText = formatRp(saldoOperasional);
+            document.getElementById('dash-total-penerimaan').innerText = formatRp(totalMasuk);
+            document.getElementById('dash-total-pengeluaran').innerText = formatRp(totalKeluar);
+            document.getElementById('dash-taktis-balance').innerText = formatRp(saldoTaktis);
+        }
+
+        // KAS OPERASIONAL MODULE
+        function openModalModalKas(type, id = null) {
+            document.getElementById('form-kas').reset();
+            setTodayDates();
+            document.getElementById('kas-type').value = type;
+            document.getElementById('kas-id').value = id || '';
+            document.getElementById('modal-kas-title').innerText = type === 'MASUK' ? 'Input Penerimaan Kas' : 'Input Pengeluaran Kas';
+            
+            // Hide RAB option if MASUK
+            document.getElementById('kas-rab-container').style.display = type === 'KELUAR' ? 'block' : 'none';
+
+            renderKategoriOptions();
+            populateRABDropdown();
+
+            if (id) {
+                const item = state.kas.find(k => k.id === id);
+                if (item) {
+                    document.getElementById('kas-date').value = item.date;
+                    document.getElementById('kas-seksi').value = item.seksi;
+                    document.getElementById('kas-kategori').value = item.kategori;
+                    document.getElementById('kas-rab-id').value = item.rabId || '';
+                    document.getElementById('kas-ket').value = item.ket;
+                    document.getElementById('kas-amount').value = item.amount;
+                }
+            }
+
+            document.getElementById('modal-kas').classList.remove('hidden');
+        }
+
+        function populateRABDropdown() {
+            const select = document.getElementById('kas-rab-id');
+            select.innerHTML = '<option value="">-- Tanpa RAB --</option>';
+            state.rab.forEach(r => {
+                select.innerHTML += `<option value="${r.id}">${r.seksi} - ${r.nama}</option>`;
+            });
+        }
+
+        function handleSaveKas(e) {
+            e.preventDefault();
+            const id = document.getElementById('kas-id').value || 'kas_' + Date.now();
+            const type = document.getElementById('kas-type').value;
+            const date = document.getElementById('kas-date').value;
+            const seksi = document.getElementById('kas-seksi').value;
+            const kategori = document.getElementById('kas-kategori').value;
+            const rabId = document.getElementById('kas-rab-id').value || null;
+            const ket = document.getElementById('kas-ket').value;
+            const amount = Number(document.getElementById('kas-amount').value);
+
+            const existingIndex = state.kas.findIndex(k => k.id === id);
+            const dataObj = { id, date, type, seksi, kategori, rabId, ket, amount };
+
+            if (existingIndex >= 0) {
+                state.kas[existingIndex] = dataObj;
+            } else {
+                state.kas.push(dataObj);
+            }
+
+            saveToLocalStorage();
+            closeModal('modal-kas');
+            showToast('Transaksi Kas Berhasil Disimpan!');
+        }
+
+        function deleteKas(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
+                state.kas = state.kas.filter(k => k.id !== id);
+                saveToLocalStorage();
+                showToast('Transaksi dihapus', 'danger');
+            }
+        }
+
+        function renderOperasionalTable() {
+            const tbody = document.getElementById('table-operasional-body');
+            const search = (document.getElementById('search-operasional').value || '').toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = state.kas.filter(k => 
+                k.ket.toLowerCase().includes(search) || 
+                k.seksi.toLowerCase().includes(search) ||
+                k.kategori.toLowerCase().includes(search)
+            ).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Belum ada transaksi operasional.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(k => {
+                const isMasuk = k.type === 'MASUK';
+                const rabObj = state.rab.find(r => r.id === k.rabId);
+                const rabBadge = rabObj ? `<span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] border border-blue-200">${rabObj.nama}</span>` : '-';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-medium text-slate-600">${k.date}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${isMasuk ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                                ${isMasuk ? 'PENERIMAAN' : 'PENGELUARAN'}
+                            </span>
+                        </td>
+                        <td class="p-3 font-semibold text-slate-700">${k.seksi}</td>
+                        <td class="p-3">${k.kategori} <div class="mt-0.5">${rabBadge}</div></td>
+                        <td class="p-3 text-slate-600">${k.ket}</td>
+                        <td class="p-3 text-right font-bold ${isMasuk ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(k.amount)}</td>
+                        <td class="p-3 text-center space-x-1">
+                            <button onclick="openModalModalKas('${k.type}', '${k.id}')" class="text-slate-400 hover:text-bjblue-500"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteKas('${k.id}')" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // UUDP MODULE (UANG MUKA SEKSI)
+        function openModalUUDP() {
+            setTodayDates();
+            document.getElementById('modal-uudp').classList.remove('hidden');
+        }
+
+        function handleSaveUUDP(e) {
+            e.preventDefault();
+            const id = 'uudp_' + Date.now();
+            const date = document.getElementById('uudp-date').value;
+            const seksi = document.getElementById('uudp-seksi').value;
+            const initialAmount = Number(document.getElementById('uudp-amount').value);
+
+            // Save UUDP entry
+            state.uudp.push({ id, date, seksi, initialAmount, isClosed: false });
+
+            // Automatically record as OPERATIONAL EXPENSE (UUDP outflow from Bendahara)
+            state.kas.push({
+                id: 'kas_uudp_out_' + Date.now(),
+                date: date,
+                type: 'KELUAR',
+                seksi: seksi,
+                kategori: 'Penyerahan UUDP Seksi',
+                rabId: null,
+                ket: `Penyerahan UUDP / Uang Muka Awal Bulan - ${seksi}`,
+                amount: initialAmount
+            });
+
+            saveToLocalStorage();
+            closeModal('modal-uudp');
+            showToast(`UUDP ${seksi} berhasil diserahkan!`);
+        }
+
+        function openModalUUDPDetail(parentId) {
+            setTodayDates();
+            document.getElementById('uudp-parent-id').value = parentId;
+            renderKategoriOptions();
+            document.getElementById('modal-uudp-detail').classList.remove('hidden');
+        }
+
+        function handleSaveUUDPDetail(e) {
+            e.preventDefault();
+            const id = 'uudp_dtl_' + Date.now();
+            const parentId = document.getElementById('uudp-parent-id').value;
+            const date = document.getElementById('uudp-detail-date').value;
+            const kategori = document.getElementById('uudp-detail-kategori').value;
+            const ket = document.getElementById('uudp-detail-ket').value;
+            const amount = Number(document.getElementById('uudp-detail-amount').value);
+
+            state.uudpDetail.push({ id, parentId, date, kategori, ket, amount });
+            saveToLocalStorage();
+            closeModal('modal-uudp-detail');
+            showToast('Rincian nota penggunaan UUDP berhasil ditambahkan');
+        }
+
+        function tutupPertanggungjawabanUUDP(uudpId) {
+            const uudp = state.uudp.find(u => u.id === uudpId);
+            if(!uudp) return;
+
+            const details = state.uudpDetail.filter(d => d.parentId === uudpId);
+            const totalTerpakai = details.reduce((acc, d) => acc + d.amount, 0);
+            const sisaPengembalian = uudp.initialAmount - totalTerpakai;
+
+            if (confirm(`Tutup pertanggungjawaban UUDP ${uudp.seksi}?\n\nUang Muka: ${formatRp(uudp.initialAmount)}\nTerpakai: ${formatRp(totalTerpakai)}\nSisa Dikembalikan ke Bendahara: ${formatRp(sisaPengembalian)}`)) {
+                uudp.isClosed = true;
+
+                // Return remaining funds back to Operational Kas if > 0
+                if (sisaPengembalian > 0) {
+                    state.kas.push({
+                        id: 'kas_uudp_return_' + Date.now(),
+                        date: new Date().toISOString().split('T')[0],
+                        type: 'MASUK',
+                        seksi: uudp.seksi,
+                        kategori: 'Pengembalian UUDP Seksi',
+                        rabId: null,
+                        ket: `Pengembalian Sisa UUDP - ${uudp.seksi}`,
+                        amount: sisaPengembalian
+                    });
+                } else if (sisaPengembalian < 0) {
+                    // Deficit reimbursement from Bendahara
+                    state.kas.push({
+                        id: 'kas_uudp_reimburse_' + Date.now(),
+                        date: new Date().toISOString().split('T')[0],
+                        type: 'KELUAR',
+                        seksi: uudp.seksi,
+                        kategori: 'Reimbursement UUDP Seksi',
+                        rabId: null,
+                        ket: `Reimbursement Kekurangan UUDP - ${uudp.seksi}`,
+                        amount: Math.abs(sisaPengembalian)
+                    });
+                }
+
+                saveToLocalStorage();
+                showToast(`UUDP ${uudp.seksi} berhasil ditutup & dipertanggungjawabkan!`);
+            }
+        }
+
+        function deleteUUDPDetail(id) {
+            if (confirm('Hapus rincian nota ini?')) {
+                state.uudpDetail = state.uudpDetail.filter(d => d.id !== id);
+                saveToLocalStorage();
+                showToast('Rincian nota dihapus', 'danger');
+            }
+        }
+
+        function renderUUDPView() {
+            const cardsContainer = document.getElementById('uudp-active-cards');
+            const dashCardsContainer = document.getElementById('dash-uudp-cards');
+            cardsContainer.innerHTML = '';
+            dashCardsContainer.innerHTML = '';
+
+            const activeUUDP = state.uudp.filter(u => !u.isClosed);
+
+            if (activeUUDP.length === 0) {
+                cardsContainer.innerHTML = `<div class="col-span-full p-6 text-center bg-white rounded-2xl border text-slate-400">Tidak ada UUDP aktif yang dipegang seksi saat ini.</div>`;
+            }
+
+            activeUUDP.forEach(u => {
+                const details = state.uudpDetail.filter(d => d.parentId === u.id);
+                const totalTerpakai = details.reduce((acc, d) => acc + d.amount, 0);
+                const sisa = u.initialAmount - totalTerpakai;
+
+                cardsContainer.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-extrabold text-bjblue-800 bg-bjblue-50 px-2.5 py-1 rounded-md border border-bjblue-100">${u.seksi}</span>
+                                <span class="text-[10px] text-slate-400">${u.date}</span>
+                            </div>
+                            <div class="space-y-1 mt-3">
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-500">Uang Muka Awal:</span>
+                                    <span class="font-bold text-slate-700">${formatRp(u.initialAmount)}</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-500">Total Terpakai:</span>
+                                    <span class="font-bold text-rose-600">${formatRp(totalTerpakai)}</span>
+                                </div>
+                                <div class="flex justify-between text-xs pt-2 border-t border-slate-100">
+                                    <span class="font-semibold text-slate-700">Sisa UUDP:</span>
+                                    <span class="font-extrabold ${sisa >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(sisa)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex gap-2 pt-3 border-t border-slate-100">
+                            <button onclick="openModalUUDPDetail('${u.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2 rounded-xl font-medium">
+                                + Rincian Nota
+                            </button>
+                            <button onclick="tutupPertanggungjawabanUUDP('${u.id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 rounded-xl font-medium">
+                                Selesaikan / Tutup
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Dashboard Quick View Cards (All Seksi)
+            const allSeksiList = ['Sekretaris', 'Seksi Organisasi', 'Seksi Kesra', 'Seksi Pendidikan', 'Seksi Usaha'];
+            allSeksiList.forEach(seksiName => {
+                const active = state.uudp.find(u => u.seksi === seksiName && !u.isClosed);
+                if (active) {
+                    const details = state.uudpDetail.filter(d => d.parentId === active.id);
+                    const terpakai = details.reduce((acc, d) => acc + d.amount, 0);
+                    const sisa = active.initialAmount - terpakai;
+
+                    dashCardsContainer.innerHTML += `
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+                            <div class="font-bold text-slate-700 truncate">${seksiName}</div>
+                            <div class="text-[10px] text-slate-400 mt-1">Sisa UUDP:</div>
+                            <div class="font-bold text-emerald-600">${formatRp(sisa)}</div>
+                        </div>
+                    `;
+                } else {
+                    dashCardsContainer.innerHTML += `
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs opacity-60">
+                            <div class="font-bold text-slate-600 truncate">${seksiName}</div>
+                            <div class="text-[10px] text-slate-400 mt-1">UUDP:</div>
+                            <div class="font-semibold text-slate-400">Rp 0</div>
+                        </div>
+                    `;
+                }
+            });
+
+            // Render Detail Table UUDP
+            const detailTbody = document.getElementById('table-uudp-detail-body');
+            detailTbody.innerHTML = '';
+
+            if (state.uudpDetail.length === 0) {
+                detailTbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Belum ada rincian nota penggunaan UUDP.</td></tr>`;
+                return;
+            }
+
+            state.uudpDetail.forEach(d => {
+                const parentUUDP = state.uudp.find(u => u.id === d.parentId);
+                const seksiName = parentUUDP ? parentUUDP.seksi : '-';
+
+                detailTbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-slate-600">${d.date}</td>
+                        <td class="p-3 font-semibold text-slate-700">${seksiName}</td>
+                        <td class="p-3 text-slate-600">${d.kategori}</td>
+                        <td class="p-3 text-slate-700">${d.ket}</td>
+                        <td class="p-3 text-right font-bold text-rose-600">${formatRp(d.amount)}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteUUDPDetail('${d.id}')" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // RAB & ANGGARAN MODULE
+        function openModalRAB(id = null) {
+            document.getElementById('form-kas')?.reset();
+            document.getElementById('rab-id').value = id || '';
+            document.getElementById('modal-rab-title').innerText = id ? 'Edit Plafon RAB' : 'Set Plafon Anggaran (RAB)';
+
+            if (id) {
+                const r = state.rab.find(item => item.id === id);
+                if (r) {
+                    document.getElementById('rab-seksi').value = r.seksi;
+                    document.getElementById('rab-nama').value = r.nama;
+                    document.getElementById('rab-plafon').value = r.plafon;
+                }
+            }
+
+            document.getElementById('modal-rab').classList.remove('hidden');
+        }
+
+        function handleSaveRAB(e) {
+            e.preventDefault();
+            const id = document.getElementById('rab-id').value || 'rab_' + Date.now();
+            const seksi = document.getElementById('rab-seksi').value;
+            const nama = document.getElementById('rab-nama').value;
+            const plafon = Number(document.getElementById('rab-plafon').value);
+
+            const index = state.rab.findIndex(r => r.id === id);
+            if (index >= 0) {
+                state.rab[index] = { id, seksi, nama, plafon };
+            } else {
+                state.rab.push({ id, seksi, nama, plafon });
+            }
+
+            saveToLocalStorage();
+            closeModal('modal-rab');
+            showToast('Plafon RAB berhasil disimpan!');
+        }
+
+        function deleteRAB(id) {
+            if (confirm('Hapus RAB ini? Ketahuilah transaksi yang terhubung ke RAB ini akan kehilangan tautannya.')) {
+                state.rab = state.rab.filter(r => r.id !== id);
+                saveToLocalStorage();
+                showToast('RAB Dihapus', 'danger');
+            }
+        }
+
+        function renderRABView() {
+            const cardsContainer = document.getElementById('rab-progress-cards');
+            const tbody = document.getElementById('table-rab-body');
+            cardsContainer.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (state.rab.length === 0) {
+                cardsContainer.innerHTML = `<div class="col-span-full p-6 text-center bg-white rounded-2xl border text-slate-400">Belum ada Plafon Anggaran (RAB) yang dibuat. Klik "+ Tambah Plafon RAB".</div>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Belum ada data RAB.</td></tr>`;
+                return;
+            }
+
+            state.rab.forEach(r => {
+                // Calculate total spent connected to this RAB ID
+                const terpakai = state.kas
+                    .filter(k => k.rabId === r.id && k.type === 'KELUAR')
+                    .reduce((acc, k) => acc + Number(k.amount), 0);
+
+                const sisa = r.plafon - terpakai;
+                const percent = Math.min(100, Math.round((terpakai / r.plafon) * 100)) || 0;
+
+                // Status Badge
+                let statusBadge = '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">AMAN</span>';
+                let progressBg = 'bg-emerald-500';
+
+                if (percent >= 100) {
+                    statusBadge = '<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[10px] font-bold">OVER BUDGET</span>';
+                    progressBg = 'bg-rose-500';
+                } else if (percent >= 80) {
+                    statusBadge = '<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[10px] font-bold">HAMPIR HABIS</span>';
+                    progressBg = 'bg-amber-500';
+                }
+
+                // Card Item
+                cardsContainer.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase text-bjblue-500 bg-bjblue-50 px-2 py-0.5 rounded">${r.seksi}</span>
+                                <h4 class="font-bold text-sm text-slate-800 mt-1">${r.nama}</h4>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-400">Realisasi: ${percent}%</span>
+                                <span class="font-bold text-slate-700">${formatRp(terpakai)} / ${formatRp(r.plafon)}</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                <div class="${progressBg} h-2.5 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-500 flex justify-between pt-2 border-t border-slate-100">
+                            <span>Sisa Anggaran:</span>
+                            <span class="font-bold ${sisa >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(sisa)}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Table Item
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-semibold text-slate-700">${r.seksi}</td>
+                        <td class="p-3 font-medium text-slate-800">${r.nama}</td>
+                        <td class="p-3 text-right font-bold text-slate-700">${formatRp(r.plafon)}</td>
+                        <td class="p-3 text-right text-rose-600 font-bold">${formatRp(terpakai)}</td>
+                        <td class="p-3 text-right font-bold ${sisa >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(sisa)}</td>
+                        <td class="p-3 text-center">${statusBadge}</td>
+                        <td class="p-3 text-center space-x-1">
+                            <button onclick="openModalRAB('${r.id}')" class="text-slate-400 hover:text-bjblue-500"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteRAB('${r.id}')" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // DANA TAKTIS MODULE
+        function openModalTaktis(type, id = null) {
+            setTodayDates();
+            document.getElementById('taktis-type').value = type;
+            document.getElementById('taktis-id').value = id || '';
+            document.getElementById('modal-taktis-title').innerText = type === 'MASUK' ? 'Input Penerimaan Dana Taktis' : 'Input Pengeluaran Dana Taktis';
+
+            if (id) {
+                const item = state.taktis.find(t => t.id === id);
+                if (item) {
+                    document.getElementById('taktis-date').value = item.date;
+                    document.getElementById('taktis-ket').value = item.ket;
+                    document.getElementById('taktis-amount').value = item.amount;
+                }
+            }
+
+            document.getElementById('modal-taktis').classList.remove('hidden');
+        }
+
+        function handleSaveTaktis(e) {
+            e.preventDefault();
+            const id = document.getElementById('taktis-id').value || 'taktis_' + Date.now();
+            const type = document.getElementById('taktis-type').value;
+            const date = document.getElementById('taktis-date').value;
+            const ket = document.getElementById('taktis-ket').value;
+            const amount = Number(document.getElementById('taktis-amount').value);
+
+            const index = state.taktis.findIndex(t => t.id === id);
+            if (index >= 0) {
+                state.taktis[index] = { id, date, type, ket, amount };
+            } else {
+                state.taktis.push({ id, date, type, ket, amount });
+            }
+
+            saveToLocalStorage();
+            closeModal('modal-taktis');
+            showToast('Transaksi Dana Taktis Disimpan!');
+        }
+
+        function deleteTaktis(id) {
+            if (confirm('Hapus transaksi dana taktis ini?')) {
+                state.taktis = state.taktis.filter(t => t.id !== id);
+                saveToLocalStorage();
+                showToast('Transaksi Dihapus', 'danger');
+            }
+        }
+
+        function renderTaktisTable() {
+            const tbody = document.getElementById('table-taktis-body');
+            tbody.innerHTML = '';
+
+            const sorted = [...state.taktis].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            if (sorted.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada catatan transaksi Dana Taktis.</td></tr>`;
+                return;
+            }
+
+            sorted.forEach(t => {
+                const isMasuk = t.type === 'MASUK';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-slate-600">${t.date}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isMasuk ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                                ${isMasuk ? 'PENERIMAAN' : 'PENGELUARAN'}
+                            </span>
+                        </td>
+                        <td class="p-3 text-slate-800 font-medium">${t.ket}</td>
+                        <td class="p-3 text-right font-bold ${isMasuk ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(t.amount)}</td>
+                        <td class="p-3 text-center space-x-1">
+                            <button onclick="openModalTaktis('${t.type}', '${t.id}')" class="text-slate-400 hover:text-bjblue-500"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteTaktis('${t.id}')" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // KATEGORI MANAGEMENT
+        function openModalKategori() {
+            document.getElementById('modal-kategori').classList.remove('hidden');
+        }
+
+        function handleSaveKategori(e) {
+            e.preventDefault();
+            const type = document.getElementById('kat-type').value;
+            const nama = document.getElementById('kat-nama').value.trim();
+
+            if (nama && !state.kategori[type].includes(nama)) {
+                state.kategori[type].push(nama);
+                saveToLocalStorage();
+                closeModal('modal-kategori');
+                showToast('Kategori baru ditambahkan!');
+            }
+        }
+
+        function deleteKategori(type, name) {
+            if (confirm(`Hapus kategori "${name}"?`)) {
+                state.kategori[type] = state.kategori[type].filter(k => k !== name);
+                saveToLocalStorage();
+                showToast('Kategori dihapus', 'danger');
+            }
+        }
+
+        function renderKategoriLists() {
+            const listPengeluaran = document.getElementById('list-kategori-pengeluaran');
+            const listPenerimaan = document.getElementById('list-kategori-penerimaan');
+
+            listPengeluaran.innerHTML = state.kategori.KELUAR.map(k => `
+                <li class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                    <span class="font-medium text-slate-700">${k}</span>
+                    <button onclick="deleteKategori('KELUAR', '${k}')" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button>
+                </li>
+            `).join('');
+
+            listPenerimaan.innerHTML = state.kategori.MASUK.map(k => `
+                <li class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                    <span class="font-medium text-slate-700">${k}</span>
+                    <button onclick="deleteKategori('MASUK', '${k}')" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button>
+                </li>
+            `).join('');
+        }
+
+        function renderKategoriOptions() {
+            const kasType = document.getElementById('kas-type')?.value || 'KELUAR';
+            const kasSelect = document.getElementById('kas-kategori');
+            const uudpDetailSelect = document.getElementById('uudp-detail-kategori');
+
+            if (kasSelect) {
+                kasSelect.innerHTML = state.kategori[kasType].map(k => `<option value="${k}">${k}</option>`).join('');
+            }
+            if (uudpDetailSelect) {
+                uudpDetailSelect.innerHTML = state.kategori.KELUAR.map(k => `<option value="${k}">${k}</option>`).join('');
+            }
+        }
+
+        // LAPORAN & FILTER MODULE
+        function toggleCustomDate() {
+            const val = document.getElementById('filter-periode').value;
+            const start = document.getElementById('custom-date-start');
+            const end = document.getElementById('custom-date-end');
+            if (val === 'CUSTOM') {
+                start.classList.remove('hidden');
+                end.classList.remove('hidden');
+            } else {
+                start.classList.add('hidden');
+                end.classList.add('hidden');
+            }
+        }
+
+        function applyReportFilter() {
+            const seksi = document.getElementById('filter-seksi').value;
+            const periode = document.getElementById('filter-periode').value;
+            const dateStart = document.getElementById('filter-date-start').value;
+            const dateEnd = document.getElementById('filter-date-end').value;
+
+            const tbody = document.getElementById('table-laporan-body');
+            tbody.innerHTML = '';
+
+            const now = new Date();
+            const currentYear = now.getFullYear();
+
+            const filtered = state.kas.filter(item => {
+                // Filter Seksi
+                if (seksi !== 'SEMUA' && item.seksi !== seksi) return false;
+
+                // Filter Periode
+                const d = new Date(item.date);
+                const itemYear = d.getFullYear();
+                const itemMonth = d.getMonth(); // 0-11
+
+                if (periode === 'BULAN_INI') {
+                    if (itemYear !== currentYear || itemMonth !== now.getMonth()) return false;
+                } else if (periode === 'TRIWULAN_1') {
+                    if (itemYear !== currentYear || itemMonth > 2) return false;
+                } else if (periode === 'TRIWULAN_2') {
+                    if (itemYear !== currentYear || itemMonth < 3 || itemMonth > 5) return false;
+                } else if (periode === 'TRIWULAN_3') {
+                    if (itemYear !== currentYear || itemMonth < 6 || itemMonth > 8) return false;
+                } else if (periode === 'TRIWULAN_4') {
+                    if (itemYear !== currentYear || itemMonth < 9 || itemMonth > 11) return false;
+                } else if (periode === 'SEMESTER_1') {
+                    if (itemYear !== currentYear || itemMonth > 5) return false;
+                } else if (periode === 'SEMESTER_2') {
+                    if (itemYear !== currentYear || itemMonth < 6) return false;
+                } else if (periode === 'TAHUN_INI') {
+                    if (itemYear !== currentYear) return false;
+                } else if (periode === 'CUSTOM') {
+                    if (dateStart && d < new Date(dateStart)) return false;
+                    if (dateEnd && d > new Date(dateEnd)) return false;
+                }
+
+                return true;
+            }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            let totalMasuk = 0;
+            let totalKeluar = 0;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Tidak ada data transaksi yang cocok dengan filter.</td></tr>`;
+            } else {
+                filtered.forEach(k => {
+                    const isMasuk = k.type === 'MASUK';
+                    const masukVal = isMasuk ? Number(k.amount) : 0;
+                    const keluarVal = !isMasuk ? Number(k.amount) : 0;
+
+                    totalMasuk += masukVal;
+                    totalKeluar += keluarVal;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 text-slate-600">${k.date}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${isMasuk ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${k.type}</span></td>
+                            <td class="p-3 font-semibold text-slate-700">${k.seksi}</td>
+                            <td class="p-3 text-slate-600">${k.kategori}</td>
+                            <td class="p-3 text-slate-700">${k.ket}</td>
+                            <td class="p-3 text-right font-bold text-emerald-600">${masukVal > 0 ? formatRp(masukVal) : '-'}</td>
+                            <td class="p-3 text-right font-bold text-rose-600">${keluarVal > 0 ? formatRp(keluarVal) : '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const netBalance = totalMasuk - totalKeluar;
+            document.getElementById('report-total-masuk').innerText = formatRp(totalMasuk);
+            document.getElementById('report-total-keluar').innerText = formatRp(totalKeluar);
+            document.getElementById('report-net-balance').innerText = formatRp(netBalance);
+            document.getElementById('report-title-label').innerText = `Hasil Laporan Kas Operasional (${seksi} - ${periode})`;
+        }
+
+        // EXPORT TO EXCEL (.XLSX)
+        function exportToExcel() {
+            const table = document.getElementById('table-report-export');
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Laporan Keuangan IW" });
+            const fileName = `Laporan_Keuangan_IW_Bank_Jateng_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showToast('Laporan berhasil didownload ke format Excel!');
+        }
+
+        // CHART VISUALIZATIONS
+        function renderCharts() {
+            // Chart 1: RAB Realisasi vs Plafon per Seksi
+            const ctxRAB = document.getElementById('chartRAB').getContext('2d');
+            const seksiList = ['Bendahara', 'Sekretaris', 'Seksi Organisasi', 'Seksi Kesra', 'Seksi Pendidikan', 'Seksi Usaha'];
+            
+            const plafonData = seksiList.map(s => {
+                return state.rab.filter(r => r.seksi === s).reduce((acc, r) => acc + Number(r.plafon), 0);
+            });
+
+            const terpakaiData = seksiList.map(s => {
+                const rabIds = state.rab.filter(r => r.seksi === s).map(r => r.id);
+                return state.kas.filter(k => rabIds.includes(k.rabId) && k.type === 'KELUAR').reduce((acc, k) => acc + Number(k.amount), 0);
+            });
+
+            if (chartRABInstance) chartRABInstance.destroy();
+
+            chartRABInstance = new Chart(ctxRAB, {
+                type: 'bar',
+                data: {
+                    labels: ['Bendahara', 'Sekretaris', 'Organisasi', 'Kesra', 'Pendidikan', 'Usaha'],
+                    datasets: [
+                        {
+                            label: 'Plafon RAB (Rp)',
+                            data: plafonData,
+                            backgroundColor: '#e2e8f0',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Realisasi Pengeluaran (Rp)',
+                            data: terpakaiData,
+                            backgroundColor: '#0284c7',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Chart 2: Distribusi Pengeluaran Seksi (Donut)
+            const ctxSeksi = document.getElementById('chartSeksi').getContext('2d');
+            const pengeluaranPerSeksi = seksiList.map(s => {
+                return state.kas.filter(k => k.seksi === s && k.type === 'KELUAR').reduce((acc, k) => acc + Number(k.amount), 0);
+            });
+
+            if (chartSeksiInstance) chartSeksiInstance.destroy();
+
+            chartSeksiInstance = new Chart(ctxSeksi, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bendahara', 'Sekretaris', 'Organisasi', 'Kesra', 'Pendidikan', 'Usaha'],
+                    datasets: [{
+                        data: pengeluaranPerSeksi,
+                        backgroundColor: ['#032541', '#0284c7', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
